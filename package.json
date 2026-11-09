@@ -1,0 +1,18 @@
+{
+  "name": "saypaid",
+  "version": "1.0.0",
+  "description": "Say the job, get paid: a voice-first, guard-railed AI back office for tradespeople on top of the PayPal Invoicing API.",
+  "main": "server.js",
+  "type": "commonjs",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js",
+    "reset": "node scripts/reset.js",
+    "seed:sandbox": "node scripts/seed-sandbox.js",
+    "check:sandbox": "node scripts/check-sandbox.js"
+  },
+  "keywords": ["paypal", "invoicing", "ai-agent", "voice", "agentic-commerce", "guardrails"],
+  "license": "MIT"
+}

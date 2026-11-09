@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pay invoice · simulated checkout</title>
+<link rel="icon" href="/logo.svg" />
+<style>
+:root{--navy:#001c64;--navy2:#003087;--blue:#0070e0;--yellow:#ffc439;--ink:#0b1a3a;--muted:#5d6b89;--line:#e3e8f2;--bg:#f5f7fb;--green:#0a8a4b}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,"Noto Sans",system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.banner{background:repeating-linear-gradient(135deg,#fff3c4 0 14px,#ffe9a3 14px 28px);color:#6a4a00;text-align:center;font-size:12.5px;font-weight:700;padding:8px 12px;border-bottom:1px solid #f1d27a}
+.wrap{max-width:980px;margin:34px auto;padding:0 20px;display:grid;grid-template-columns:1.25fr 1fr;gap:22px}
+@media(max-width:820px){.wrap{grid-template-columns:1fr}}
+.box{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 34px rgba(0,28,100,.07);overflow:hidden}
+.ih{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;padding:22px 24px;display:flex;justify-content:space-between;align-items:flex-end}
+.ih .from{font-size:12px;opacity:.75}.ih b{font-size:19px;display:block;margin-top:3px}.ih .no{text-align:right;font-size:12px;opacity:.85}
+.ib{padding:20px 24px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;border-bottom:1px solid var(--line);padding:6px 0}
+td{padding:9px 0;border-bottom:1px solid var(--line)}.r{text-align:right}.num{font-variant-numeric:tabular-nums}
+.tot{margin-top:12px;font-size:13.5px}.tot div{display:flex;justify-content:space-between;padding:3px 0;color:var(--muted)}.tot .g{color:var(--ink);font-weight:800;font-size:17px;border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+.meta{display:flex;gap:26px;font-size:12.5px;color:var(--muted);margin-bottom:14px}.meta b{display:block;color:var(--ink);font-size:13.5px;margin-top:2px}
+.pay{padding:24px}.due{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.amt{font-size:40px;font-weight:800;letter-spacing:-.02em;margin:4px 0 4px}.sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+.b{width:100%;border:0;border-radius:999px;height:50px;font:inherit;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .12s,filter .12s}
+.b:hover{filter:brightness(.97)}.b:active{transform:scale(.99)}.b:disabled{opacity:.6;cursor:wait}
+.y{background:var(--yellow);color:var(--navy)}.k{background:#2c2e2f;color:#fff;margin-top:10px}.o{background:#fff;color:var(--navy2);border:1.5px solid var(--navy2);margin-top:10px;font-size:14.5px}
+.y .w{font-style:italic;font-weight:900;letter-spacing:-.01em}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:14px 0 4px}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.fine{font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.5;display:flex;gap:8px}
+.done{text-align:center;padding:34px 24px}.ok{width:74px;height:74px;border-radius:50%;background:#e3f6ec;color:var(--green);display:grid;place-items:center;margin:0 auto 14px;animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+.tx{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:inline-block;margin-top:10px}
+.st{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:#e8f1fd;color:var(--blue)}
+.spin{width:18px;height:18px;border:2.5px solid currentColor;border-right-color:transparent;border-radius:50%;animation:r .7s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
+.err{background:#fdecec;color:#b42318;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:12px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="banner">SIMULATED CHECKOUT · SayPaid mock mode · no real money moves and this is not a PayPal page</div>
+<div class="wrap" id="root"><div class="box ib">Loading invoice…</div></div>
+<script>
+(async () => {
+  const id = location.pathname.split('/').pop();
+  const root = document.getElementById('root');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const money = (c, cur) => new Intl.NumberFormat('en-IE', { style: 'currency', currency: cur }).format(c / 100);
+  const date = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '–';
+  const check = '<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>';
+  const lock = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  let d;
+  try { const r = await fetch('/api/pay/' + id); d = await r.json(); if (!r.ok) throw new Error(d.error || 'Invoice not found'); }
+  catch (e) { root.innerHTML = `<div class="box ib"><b>We couldn't load this invoice.</b><div class="err">${esc(e.message)}</div></div>`; return; }
+  const i = d.invoice, cur = i.currency;
+  const payable = ['SENT', 'UNPAID', 'PARTIALLY_PAID'].includes(i.status);
+  root.innerHTML = `
+  <div class="box">
+    <div class="ih"><div><div class="from">Invoice from</div><b>${esc(d.business)}</b></div><div class="no">${esc(i.number)}<br><span class="st" style="background:rgba(255,255,255,.16);color:#fff">${esc(i.status.replace(/_/g, ' '))}</span></div></div>
+    <div class="ib">
+      <div class="meta"><div>Billed to<b>${esc(i.customer)}</b></div><div>Issued<b>${date(i.invoice_date)}</b></div><div>Due<b>${date(i.due_date)}</b></div></div>
+      <table><tr><th>Description</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th></tr>
+      ${i.items.map((it) => `<tr><td>${esc(it.name)}</td><td class="r num">${it.quantity}${it.unit === 'HOURS' ? ' h' : ''}</td><td class="r num">${money(Math.round(it.unit_price * 100), cur)}</td><td class="r num">${money(Math.round(it.unit_price * it.quantity * 100), cur)}</td></tr>`).join('')}</table>
+      <div class="tot"><div><span>Subtotal</span><span class="num">${money(i.subtotal_cents, cur)}</span></div><div><span>VAT ${d.taxRate}%</span><span class="num">${money(i.tax_cents, cur)}</span></div>${i.paid_cents ? `<div><span>Already paid</span><span class="num">− ${money(i.paid_cents, cur)}</span></div>` : ''}<div class="g"><span>Total</span><span class="num">${money(i.total_cents, cur)}</span></div></div>
+      ${i.note ? `<p style="color:var(--muted);font-size:13px;margin:16px 0 0">${esc(i.note)}</p>` : ''}
+    </div>
+  </div>
+  <div class="box" id="paybox">
+    <div class="pay" id="payform">
+      <div class="due">Amount due</div>
+      <div class="amt num">${money(i.due_cents, cur)}</div>
+      <div class="sub">${payable ? `Due ${date(i.due_date)}` : `This invoice is ${esc(i.status.replace(/_/g, ' ').toLowerCase())}.`}</div>
+      ${payable ? `
+      <button class="b y" data-m="PAYPAL"><span>Pay with</span> <span class="w">PayPal</span><small style="font-weight:600;opacity:.7">(simulated)</small></button>
+      <button class="b o" data-m="PAYPAL">Pay Later options (simulated)</button>
+      <div class="or">or</div>
+      <button class="b k" data-m="CARD">Debit or credit card (simulated)</button>` : ''}
+      <div id="err"></div>
+      <div class="fine">${lock}<span>In live mode this button is PayPal's own hosted invoice page. Here SayPaid simulates the payer: it marks the mock invoice paid and fires a signed <b>INVOICING.INVOICE.PAID</b> webhook to the app, exactly like PayPal would.</span></div>
+    </div>
+  </div>`;
+  document.querySelectorAll('[data-m]').forEach((b) => b.addEventListener('click', async () => {
+    document.querySelectorAll('[data-m]').forEach((x) => (x.disabled = true));
+    const label = b.innerHTML;
+    b.innerHTML = '<span class="spin"></span> Processing…';
+    try {
+      const r = await fetch(`/mock-pay/${id}/pay`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method: b.dataset.m }) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Payment failed');
+      await new Promise((res) => setTimeout(res, 650));
+      document.getElementById('paybox').innerHTML = `<div class="done"><div class="ok">${check}</div><div style="font-size:22px;font-weight:800">Payment complete</div><div class="sub" style="margin:6px 0 0">${money(i.due_cents, cur)} paid to ${esc(d.business)}</div><div class="tx">Transaction ${esc(j.transaction_id || '')}</div><p class="sub" style="margin-top:18px">You can close this page. A receipt would be emailed by PayPal in live mode.</p></div>`;
+    } catch (e) {
+      b.innerHTML = label;
+      document.querySelectorAll('[data-m]').forEach((x) => (x.disabled = false));
+      document.getElementById('err').innerHTML = `<div class="err">${esc(e.message)}</div>`;
+    }
+  }));
+})();
+</script>
+</body>
+</html>

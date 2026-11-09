@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SayPaid · Say the job. Get paid.</title>
+  <meta name="description" content="Voice-first AI back office for tradespeople on the PayPal Invoicing API. The AI proposes, you sign, PayPal executes." />
+  <meta name="theme-color" content="#003087" />
+  <link rel="icon" href="/logo.svg" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img src="/logo.svg" alt="" width="36" height="36" />
+      <div><div class="name">SayPaid</div><div class="tag">Say the job. Get paid.</div></div>
+    </div>
+    <div class="top-right">
+      <span class="pill" id="p-paypal"><span class="dot"></span>PayPal</span>
+      <span class="pill ai" id="p-ai"><span class="dot"></span>AI</span>
+      <span class="pill chain" id="p-chain" title="Hash-chained audit log"><span class="dot"></span>Audit</span>
+      <div class="seg" id="lang" title="Voice input language"><button data-l="en-US" class="on">EN</button><button data-l="de-DE">DE</button></div>
+      <button class="iconbtn" id="speak" title="Read replies aloud"></button>
+      <button class="iconbtn" id="theme" title="Toggle dark mode"></button>
+      <button class="iconbtn" id="reset" title="Reset demo data (mock mode)"></button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="panel assistant" aria-label="Assistant">
+      <div class="panel-h"><h2><span id="i-spark"></span> Assistant</h2><span class="sub" id="engine-label"></span></div>
+      <div class="panel-b" id="talk-body">
+        <div class="hero" id="hero">
+          <button class="orb" id="orb" title="Tap and describe the job"></button>
+          <h3>What did you just finish?</h3>
+          <p>Speak or type the job in English or German. SayPaid drafts the PayPal invoice, and <b>you sign</b> before anything is sent.</p>
+          <div class="steps">
+            <div class="step"><div class="n">1</div><b>Say it</b><span>hours, parts, customer</span></div>
+            <div class="step"><div class="n">2</div><b>Sign it</b><span>exact card, no surprises</span></div>
+            <div class="step"><div class="n">3</div><b>Get paid</b><span>PayPal, Pay Later, card</span></div>
+          </div>
+          <div class="examples-h">Try saying</div>
+          <div id="examples"></div>
+        </div>
+        <div class="feed" id="feed"></div>
+      </div>
+      <div class="composer">
+        <form class="compose-box" id="ask">
+          <textarea id="text" rows="2" placeholder="e.g. Invoice Cafe Morgenrot for 3.5 hours espresso machine repair at 70 an hour, plus 48 euros for a pump gasket"></textarea>
+          <div class="listening hidden" id="listening"><div class="lab"><i></i> Listening</div><canvas id="wave" width="600" height="88"></canvas><div class="live" id="live"></div></div>
+          <div class="compose-row">
+            <span class="hint" id="hint">Enter to send</span>
+            <div style="display:flex;align-items:center"><button type="button" class="mic" id="mic" title="Dictate"></button><button type="submit" class="send" id="send"><span>Send</span></button></div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel approvals" aria-label="Signature queue">
+      <div class="panel-h"><h2><span id="i-pen"></span> Needs your signature <span class="count zero" id="pending-count">0</span></h2></div>
+      <div class="panel-b">
+        <div class="intro"><span id="i-shield"></span><span>The AI only <b>proposes</b>. Nothing reaches PayPal's send, remind, cancel, payment or refund endpoints until you approve the exact action shown here.</span></div>
+        <div id="approvals"></div>
+        <div class="done-h">Decided</div>
+        <div id="history"></div>
+      </div>
+    </section>
+
+    <section class="panel dash" aria-label="Dashboard">
+      <div class="panel-h">
+        <h2><span id="i-chart"></span> Business</h2>
+        <div class="tabs"><button class="tab on" data-tab="overview">Overview</button><button class="tab" data-tab="activity">Activity</button></div>
+      </div>
+      <div class="panel-b" id="tab-overview">
+        <div class="kpis">
+          <div class="kpi out"><div class="k"><span id="i-k1"></span>Outstanding</div><div class="v num" id="k-out">–</div><div class="d" id="k-out-d"></div></div>
+          <div class="kpi over"><div class="k"><span id="i-k2"></span>Overdue</div><div class="v num" id="k-over">–</div><div class="d" id="k-over-d"></div></div>
+          <div class="kpi paid" id="kpi-paid"><div class="k"><span id="i-k3"></span>Collected</div><div class="v num" id="k-paid">–</div><div class="d" id="k-paid-d"></div></div>
+        </div>
+        <div class="charts">
+          <div class="chart"><h4>Cash collected <span>last 8 weeks</span></h4><div class="bars" id="bars"></div></div>
+          <div class="chart aging"><h4>Receivables aging <span>amount due</span></h4><div id="aging"></div></div>
+        </div>
+        <div class="list-h"><h3>Invoices</h3><div class="filters" id="filters"><button class="on" data-f="all">All</button><button data-f="open">Open</button><button data-f="overdue">Overdue</button><button data-f="paid">Paid</button><button data-f="draft">Drafts</button></div></div>
+        <div id="invoices"></div>
+      </div>
+      <div class="panel-b hidden" id="tab-activity">
+        <div class="subtabs"><button class="on" data-s="trace">PayPal API trace</button><button data-s="audit">Audit chain</button><button data-s="events">Automation events</button></div>
+        <div id="activity"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toasts" id="toasts"></div>
+  <div id="drawer-root"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

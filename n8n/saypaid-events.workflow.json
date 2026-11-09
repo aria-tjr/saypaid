@@ -1,0 +1,94 @@
+{
+  "name": "SayPaid events -> verify HMAC -> route",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "saypaid-events", "responseMode": "onReceived", "options": { "rawBody": true } },
+      "id": "a1f0c3e2-0001-4c7e-9a10-000000000001",
+      "name": "SayPaid webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "saypaid-events"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verifies X-SayPaid-Signature (HMAC-SHA256 of the raw body with AUTOMATION_SECRET).\n// Requires NODE_FUNCTION_ALLOW_BUILTIN=crypto and SAYPAID_SECRET in the n8n environment.\nconst crypto = require('crypto');\nconst out = [];\nfor (const item of $input.all()) {\n  const headers = item.json.headers || {};\n  const raw = item.binary?.data ? Buffer.from(item.binary.data.data, 'base64').toString('utf8') : JSON.stringify(item.json.body);\n  const expected = 'sha256=' + crypto.createHmac('sha256', $env.SAYPAID_SECRET || '').update(raw).digest('hex');\n  const got = headers['x-saypaid-signature'] || '';\n  const ok = got.length === expected.length && crypto.timingSafeEqual(Buffer.from(got), Buffer.from(expected));\n  if (!ok) throw new Error('Invalid SayPaid signature');\n  out.push({ json: JSON.parse(raw) });\n}\nreturn out;"
+      },
+      "id": "a1f0c3e2-0002-4c7e-9a10-000000000002",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            { "conditions": { "conditions": [{ "leftValue": "={{ $json.type }}", "rightValue": "invoice.paid", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and", "options": { "caseSensitive": true, "typeValidation": "strict" } }, "renameOutput": true, "outputKey": "paid" },
+            { "conditions": { "conditions": [{ "leftValue": "={{ $json.type }}", "rightValue": "invoice.sent", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and", "options": { "caseSensitive": true, "typeValidation": "strict" } }, "renameOutput": true, "outputKey": "sent" },
+            { "conditions": { "conditions": [{ "leftValue": "={{ $json.type }}", "rightValue": "refund.recorded", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and", "options": { "caseSensitive": true, "typeValidation": "strict" } }, "renameOutput": true, "outputKey": "refund" }
+          ]
+        },
+        "options": { "fallbackOutput": "extra" }
+      },
+      "id": "a1f0c3e2-0003-4c7e-9a10-000000000003",
+      "name": "Route by event type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.CHAT_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: `Paid: ${$json.data.customer} ${$json.data.total} ${$json.data.currency} (${$json.data.number})` }) }}",
+        "options": {}
+      },
+      "id": "a1f0c3e2-0004-4c7e-9a10-000000000004",
+      "name": "Notify team chat (placeholder)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 160],
+      "notes": "Replace CHAT_WEBHOOK_URL with your Slack/Teams/Mattermost incoming webhook."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BOOKKEEPING_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "a1f0c3e2-0005-4c7e-9a10-000000000005",
+      "name": "Append to bookkeeping log (placeholder)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 320],
+      "notes": "Point at a Google Sheets / Airtable / accounting webhook of your choice."
+    },
+    {
+      "parameters": {},
+      "id": "a1f0c3e2-0006-4c7e-9a10-000000000006",
+      "name": "Ignore other events",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [900, 480]
+    }
+  ],
+  "connections": {
+    "SayPaid webhook": { "main": [[{ "node": "Verify signature", "type": "main", "index": 0 }]] },
+    "Verify signature": { "main": [[{ "node": "Route by event type", "type": "main", "index": 0 }]] },
+    "Route by event type": { "main": [
+      [{ "node": "Notify team chat (placeholder)", "type": "main", "index": 0 }, { "node": "Append to bookkeeping log (placeholder)", "type": "main", "index": 0 }],
+      [{ "node": "Append to bookkeeping log (placeholder)", "type": "main", "index": 0 }],
+      [{ "node": "Append to bookkeeping log (placeholder)", "type": "main", "index": 0 }],
+      [{ "node": "Ignore other events", "type": "main", "index": 0 }]
+    ] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "pinData": {}
+}
