@@ -1,5 +1,7 @@
 <p align="center"><img src="docs/cover.png" alt="SayPaid: say the job, get paid" width="100%"></p>
 
+> 🎬 **Demo video:** https://youtu.be/pgwmLNfwk4w
+
 # SayPaid · say the job, get paid
 
 **A voice-first AI back office for tradespeople, built on the PayPal Invoicing API.**
